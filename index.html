@@ -152,11 +152,6 @@
         .action-btn:active {
             box-shadow: inset 3px 3px 7px #0a0914, inset -3px -3px 7px #221f3f;
         }
-        .action-btn img {
-            width: 30px;
-            height: 30px;
-            margin-bottom: 5px;
-        }
         .action-btn-disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -1145,7 +1140,14 @@
                 }, 500);
 
             } else {
-                loadingScreen.textContent = `Error Loading Data: ${result.cleanMessage}. Please restart the bot.`;
+                // FIX: Ensure the error is visible and the spinner is replaced.
+                loadingScreen.innerHTML = `
+                    <div style="text-align: center; color: #ff5555; padding: 20px;">
+                        <h3 style="margin-bottom: 10px;">🛑 API Error</h3>
+                        <p style="font-size: 14px;">Failed to load user data: ${result.cleanMessage}.</p>
+                        <p style="font-size: 14px; margin-top: 10px;">Please check your server (Vercel/Supabase) logs and try restarting the Mini App.</p>
+                    </div>
+                `;
             }
         }
         
