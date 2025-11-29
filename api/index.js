@@ -359,7 +359,9 @@ async function handleGetUserData(req, res, body) {
 
             // 5. Get referrals count
             const referrals = await supabaseFetch('users', 'GET', null, `?referral_id=eq.${id}&count=exact&select=id`);
-            const referral_count = referrals.length; // Count property is usually in the headers, but this works with 'select=id' if count is not available in headers
+            // Note: The count is typically in the response headers, but if not,
+            // we rely on the length of the result array (which works with 'select=id').
+            const referral_count = referrals.length; 
             
             // 6. Success
             return sendSuccess(res, { 
@@ -861,33 +863,18 @@ async function handleWithdraw(req, res, body) {
  * The main serverless function handler.
  */
 module.exports = async (req, res) => {
-  // Only allow POST requests
+  // 1. Only allow POST requests
   if (req.method !== 'POST') {
     return sendError(res, 'Only POST requests are allowed.', 405);
   }
 
-  // Parse the JSON body
-  let body;
-  try {
-    body = await new Promise((resolve, reject) => {
-      let data = '';
-      req.on('data', chunk => { data += chunk; });
-      req.on('end', () => {
-        try {
-          resolve(JSON.parse(data));
-        } catch (e) {
-          reject(new Error('Invalid JSON format in request body.'));
-        }
-      });
-      req.on('error', reject);
-    });
-
-  } catch (error) {
-    return sendError(res, error.message, 400);
-  }
-
+  // 🛑🛑🛑 التعديل الرئيسي هنا: الاعتماد على تحليل Vercel التلقائي للجسم 🛑🛑🛑
+  // تم إزالة قراءة الـ Stream اليدوية (req.on('data'), req.on('end'))
+  const body = req.body;
+  // 🛑🛑🛑 نهاية التعديل 🛑🛑🛑
+  
   if (!body || !body.type) {
-    return sendError(res, 'Missing "type" field in the request body.', 400);
+    return sendError(res, 'Missing "type" field in the request body, or body is empty.', 400);
   }
 
   // ⬅️ initData Security Check
@@ -922,10 +909,10 @@ module.exports = async (req, res) => {
     case 'withdraw':
       await handleWithdraw(req, res, body);
       break;
-    case 'completeTask': // ⬅️ The existing route is now dynamic
+    case 'completeTask': 
       await handleCompleteTask(req, res, body);
       break;
-    case 'getTasks': // ⬅️ المسار الجديد
+    case 'getTasks': 
       await handleGetTasks(req, res, body);
       break;
     default:
